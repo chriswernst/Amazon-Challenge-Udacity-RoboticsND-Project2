@@ -50,109 +50,40 @@ def handle_calculate_IK(req):
         # URDF Folder > kr210.urdf.xacro
         
         # Create a dictionary of DH Parameters
-        s = {alpha0:     0,     a0:      0,    d1: 0.75,    q1:          q1,
-             alpha1: -pi/2,     a1:   0.35,    d2: 0,       q2:   q2 - pi/2, 
-             alpha2:     0,     a2:   1.25,    d3: 0,       q3:          q3,
-             alpha3: -pi/2,     a3: -0.054,    d4: 1.5,     q4:          q4,
-             alpha4:  pi/2,     a4:      0,    d5: 0,       q5:          q5,
-             alpha5: -pi/2,     a5:      0,    d6: 0,       q6:          q6,
-             alpha6:     0,     a6:      0,    d7: 0.303,   q7:           0}
+        DH_TABLE = {alpha0:     0,     a0:      0,    d1: 0.75,    q1:          q1,
+                    alpha1: -pi/2,     a1:   0.35,    d2: 0,       q2:   q2 - pi/2, 
+                    alpha2:     0,     a2:   1.25,    d3: 0,       q3:          q3,
+                    alpha3: -pi/2,     a3: -0.054,    d4: 1.5,     q4:          q4,
+                    alpha4:  pi/2,     a4:      0,    d5: 0,       q5:          q5,
+                    alpha5: -pi/2,     a5:      0,    d6: 0,       q6:          q6,
+                    alpha6:     0,     a6:      0,    d7: 0.303,   q7:           0}
 
                 
+        
+        def transformationMatrix(alpha, a, d, q):
+            TF = Matrix([[             cos(q),            -sin(q),            0,       a],
+                      [ sin(q)*cos(alpha), cos(q)*cos(alpha), -sin(alpha), -sin(alpha)*d],
+                      [ sin(q)*sin(alpha), cos(q)*sin(alpha),  cos(alpha),  cos(alpha)*d],
+                      [                   0,                   0,            0,       1]])
+            return TF
+        
         # Homogeneous Transforms for between neighboring links: 
-            # Define Modified DH Transformation matrix 	 	
-            # Create individual transformation matrices
-            # Extract rotation matrices from the transformation matrices
-        
-        
-        T0_1 = Matrix([[             cos(q1),            -sin(q1),            0,              a0],
-                       [ sin(q1)*cos(alpha0), cos(q1)*cos(alpha0), -sin(alpha0), -sin(alpha0)*d1],
-                       [ sin(q1)*sin(alpha0), cos(q1)*sin(alpha0),  cos(alpha0),  cos(alpha0)*d1],
-                       [                   0,                   0,            0,               1]])
-        T0_1 = T0_1.subs(s)
-            # For between Link 0 and 1
-        
-        T1_2 = Matrix([[             cos(q2),            -sin(q2),            0,              a1],
-                       [ sin(q2)*cos(alpha1), cos(q2)*cos(alpha1), -sin(alpha1), -sin(alpha1)*d2],
-                       [ sin(q2)*sin(alpha1), cos(q2)*sin(alpha1),  cos(alpha1),  cos(alpha1)*d2],
-                       [                   0,                   0,            0,               1]])
-        T1_2 = T1_2.subs(s)
-                # For between Link 1 and 2
-                        
-        T2_3 = Matrix([[             cos(q3),            -sin(q3),            0,              a2],
-                       [ sin(q3)*cos(alpha2), cos(q3)*cos(alpha2), -sin(alpha2), -sin(alpha2)*d3],
-                       [ sin(q3)*sin(alpha2), cos(q3)*sin(alpha2),  cos(alpha2),  cos(alpha2)*d3],
-                       [                   0,                   0,            0,               1]])
-        T2_3 = T2_3.subs(s)
-                # For between Link 2 and 3
-                
-        T3_4 = Matrix([[             cos(q4),            -sin(q4),            0,              a3],
-                       [ sin(q4)*cos(alpha3), cos(q4)*cos(alpha3), -sin(alpha3), -sin(alpha3)*d4],
-                       [ sin(q4)*sin(alpha3), cos(q4)*sin(alpha3),  cos(alpha3),  cos(alpha3)*d4],
-                       [                   0,                   0,            0,               1]])
-        T3_4 = T3_4.subs(s)
-                # For between Link 3 and 4
-                
-        T4_5 = Matrix([[             cos(q5),            -sin(q5),            0,              a4],
-                       [ sin(q5)*cos(alpha4), cos(q5)*cos(alpha4), -sin(alpha4), -sin(alpha4)*d5],
-                       [ sin(q5)*sin(alpha4), cos(q5)*sin(alpha4),  cos(alpha4),  cos(alpha4)*d5],
-                       [                   0,                   0,            0,               1]])
-        T4_5 = T4_5.subs(s)
-                # For between Link 4 and 5
-                
-        T5_6 = Matrix([[             cos(q6),            -sin(q6),            0,              a5],
-                       [ sin(q6)*cos(alpha5), cos(q6)*cos(alpha5), -sin(alpha5), -sin(alpha5)*d6],
-                       [ sin(q6)*sin(alpha5), cos(q6)*sin(alpha5),  cos(alpha5),  cos(alpha5)*d6],
-                       [                   0,                   0,            0,               1]])
-        T5_6 = T5_6.subs(s)
-                # For between Link 5 and 6
-                      
-        T6_G = Matrix([[             cos(q7),            -sin(q7),            0,              a6],
-                       [ sin(q7)*cos(alpha6), cos(q7)*cos(alpha6), -sin(alpha6), -sin(alpha6)*d7],
-                       [ sin(q7)*sin(alpha6), cos(q7)*sin(alpha6),  cos(alpha6),  cos(alpha6)*d7],
-                       [                   0,                   0,            0,               1]])
-        T6_G = T6_G.subs(s)
-                # For between Link 6 and Gripper (7)
-        
+        # Create individual transformation matrices
 
-        # Composition of Homogeneous Transforms
-            # Transform from base link to end effector; use simplify to simplify trig expressions.
-        T0_2 = simplify(T0_1 * T1_2) # Base Link to Link2
-        T0_3 = simplify(T0_2 * T2_3) # Base Link to Link3
-        T0_4 = simplify(T0_3 * T3_4) # Base Link to Link4
-        T0_5 = simplify(T0_4 * T4_5) # Base Link to Link5
-        T0_6 = simplify(T0_5 * T5_6) # Base Link to Link6
-        T0_G = simplify(T0_6 * T6_G) # Base Link to Gripper
-        # Note: this block of code takes time to execute(~30s)
+        T0_1 = transformMatrix(alpha0, a0, d1, q1).subs(DH_TABLE) # Base Link to Link1
+        T1_2 = transformMatrix(alpha1, a1, d2, q2).subs(DH_TABLE) # Link1 to Link2
+        T2_3 = transformMatrix(alpha2, a2, d3, q3).subs(DH_TABLE) # Link2 to Link3
+        T3_4 = transformMatrix(alpha3, a3, d4, q4).subs(DH_TABLE) # Link3 Link to Link4
+        T4_5 = transformMatrix(alpha4, a4, d5, q5).subs(DH_TABLE) # Link4 to Link5       
+        T5_6 = transformMatrix(alpha5, a5, d6, q6).subs(DH_TABLE) # Link5 to Link6       
+        T6_G = transformMatrix(alpha6, a6, d7, q7).subs(DH_TABLE) # Link6 to Gripper             
         
-            
-	    ### Compensate for rotation discrepancy between DH parameters and Gazebo
+        # Composition of Homogeneous Transforms 
+
+        T0_G = T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_G
+        # this is the transformation matrix from the base link to the end effector
         
-        R_z = Matrix([[cos(pi),   -sin(pi),       0,          0],
-                    [  sin(pi),    cos(pi),       0,          0],
-                    [        0,          0,       1,          0],
-                    [        0,          0,       0,          1]])    
-                # Rotate about the Z axis by 180deg
-        
-        R_y = Matrix([[cos(-pi/2),         0,  sin(-pi/2),    0],
-                    [           0,         1,           0,    0],
-                    [ -sin(-pi/2),         0,  cos(-pi/2),    0],
-                    [           0,         0,           0,    1]])    
-                # Rotate about the Y axis by -90deg   
-        R_corr = simplify(R_z * R_y)
-        
-     
-        
-        T_total = simplify(T0_G * R_corr)
-        # This line also takes time to calculate (~15s)
-        
-        # Evaluate numerically at '0' to verify FK section with Rviz (NB pg. 84 - 'Debugging FK')
-        
-        # gripper_testing = print(T_total.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
-            # correct at d1=.75, d2=0
-	           
-        
-        
+              
         def rot_x(q):
             
             R_x = Matrix([[ 1,             0,         0,    0],
@@ -186,7 +117,25 @@ def handle_calculate_IK(req):
             # Rotation about Z axis (Yaw)
             
         
-                    
+        
+	    ### Compensate for rotation discrepancy between DH parameters and Gazebo
+        
+        R_z = rot_z(pi)
+        # Rotate about the Z axis by 180deg
+        R_y = rot_y(-pi/2)
+        # Rotate about the Y axis by -90deg   
+        R_corr = R_z * R_y
+        
+        T_total = T0_G * R_corr
+        # This line also takes time to calculate (~15s)
+        
+        # Evaluate numerically at '0' to verify FK section with Rviz (NB pg. 84 - 'Debugging FK')
+        
+        # gripper_testing = print(T_total.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
+            # correct at d1=.75, d2=0
+	           
+        
+  
             
         ##### Your IK code here 
 
@@ -264,8 +213,7 @@ def handle_calculate_IK(req):
             theta2 = pi/2 - angleG - angleA     
             #theta2
 
-            
-            
+
             # Now, let's determine theta3:
             
             # We'll use the same logic from theta2 of defining a 90degree angle, then deducing theta3 from that.
@@ -292,6 +240,7 @@ def handle_calculate_IK(req):
             theta5 = atan2(sqrt(R3_6[0,2]*R3_6[0,2] + R3_6[2,2]*R3_6[2,2]),R3_6[1,2])
             theta6 = atan2(-R3_6[1,1],R3_6[1,0])
             
+            FK = T_total.evalf(subs{q1: theta1, q2: theta2, q3: theta3, q4: theta4, q5: theta5, q6:theta6})
                 
             # Populate response for the IK request
             joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
