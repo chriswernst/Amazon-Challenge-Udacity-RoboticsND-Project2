@@ -5,7 +5,7 @@
 
 [//]: # (Image References)
 
-[image1]: ./path/image.jpg
+[image1]: ./Kuka KR210/req-challenge.gif
 [image2]: ./path/image.jpg
 [image3]: ./path/image.jpg
 [image4]: ./path/image.jpg
@@ -20,20 +20,22 @@
 
 ###### The goal of this project is to program a Serial Manipulator to pick up objects and place them in a bin. The project is based on Amazon's Pick and Place Challenge.
 
+![][image1]
 
 ##### Specifically, the objectives of this project are to:
-	1. Identify the location of a single object on a 9-position shelf(3x3 configuration)
-	2. Maneuver the Kuka KR210 - a 6 degree of freedom Serial Manipulator - toward the object
-	3. Grasp the object
-	4. Chart a path to the destination bin
-	5. Maneuver the Kuka KR210 along the charted path
-	6. Sucessfully place the object in the destination bin
+
+1. Identify the location of a single object on a 9-position shelf(3x3 configuration)
+2. Maneuver the Kuka KR210 - a 6 degree of freedom Serial Manipulator - toward the object
+3. Grasp the object
+4. Chart a path to the destination bin
+5. Maneuver the Kuka KR210 along the charted path
+6. Sucessfully place the object in the destination bin
 
 ###
 
-If you'd like to watch the Kuka KR210 in action, click [here](https://youtu.be/rV0lWmJ7uOM)
+If you'd like to watch the Kuka KR210 in action, click [here.](https://youtu.be/rV0lWmJ7uOM)
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/rV0lWmJ7uOM" frameborder="0" allowfullscreen></iframe>
+Check out the Amazon Robotics Challenge [here.](https://youtu.be/yVIRLao1E28)
 
 ###
 
