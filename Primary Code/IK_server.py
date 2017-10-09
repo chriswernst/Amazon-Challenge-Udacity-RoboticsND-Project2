@@ -148,7 +148,7 @@ def handle_calculate_IK(req):
         
         # Evaluate numerically at '0' to verify FK section with Rviz (NB pg. 84 - 'Debugging FK')
         
-        gripper_testing = print(T_total.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
+        # gripper_testing = print(T_total.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
             # correct at d1=.75, d2=0
 	           
         
@@ -159,11 +159,9 @@ def handle_calculate_IK(req):
                           [ 0,        cos(q),   -sin(q),    0],
                           [ 0,        sin(q),    cos(q),    0],
                           [ 0,             0,         0,    1]])
-            
-            # R_x = R_x.evalf(subs={q1:q1*dtr})
-        
+                    
             return R_x
-            # Rotation about X axis
+            # Rotation about X axis (Roll)
         
             
         def rot_y(q):              
@@ -172,11 +170,9 @@ def handle_calculate_IK(req):
                           [       0,        1,        0,    0],
                           [ -sin(q),        0,   cos(q),    0],
                           [       0,        0,        0,    1]])
-            
-            # R_y = R_y.evalf(subs={q2:q2*dtr})
         
             return R_y
-            # Rotation about Y axis
+            # Rotation about Y axis (Pitch)
         
         
         def rot_z(q):    
@@ -186,10 +182,8 @@ def handle_calculate_IK(req):
                           [ 0,              0,        1,    0],
                           [ 0,              0,        0,    1]])
             
-            # R_z = R_z.evalf(subs={q3:q3*dtr})
-            
             return R_z
-            # Rotation about Z axis
+            # Rotation about Z axis (Yaw)
             
         
                     
@@ -234,31 +228,59 @@ def handle_calculate_IK(req):
             # theta1
             
             
-            angleG = atan2((Wz - 0.75),(Wx - 0.35))
+            
+            # Now, let's determine theta2:
+            
+            SIDE_S = 0.054
+            # Taken from the Z measurement from the URDF (joints 4 and 5), lines 344, 355. This is a constant.
+            
+            JOINTS_4AND5_X = 0.96 + 0.54
+            # This is taken from line 344, 351(joints 4 and 5) of the URDF file 'kr210.urdf.xacro'. This is a constant.
+            
+            # SIDES
+            SIDE_A = sqrt(SIDE_S**2 + JOINTS_4AND5_X**2)
+            # SIDE_A is a constant length
+            sideB = sqrt((Wz-0.75)**2 + (Wx-0.35)**2 + Wy**2)
+            # sideB is a variable length
+            SIDE_C = 1.25
+            # SIDE_C is a constant length
+            
+            # ANGLES
+            # We're going to leverage the Law of Cosines: c**2 = a**2 + b**2 - 2*a*b*cos(C) -> where C is the desired angle
+            angleA = acos((SIDE_C**2 + sideB**2 - SIDE_A**2)/(2*SIDE_C*sideB))
+            # angleA is a variable angle
+            angleB = acos((SIDE_C**2 + SIDE_A**2 - sideB**2)/(2*SIDE_C*SIDE_A))
+            # angleB is a variable angle            
+            angleC = acos((SIDE_A**2 + sideB**2 - SIDE_C**2)/(2*SIDE_A*sideB))
+            # angleC is a variable angle            
+            
+            angleG = atan2((Wz - 0.75), sqrt((Wx-0.35)**2 + Wy**2))
             # I've defined 'angleG' as the angle from joint2 pointing along the X axis
                 # where the hypoteneuse hits the WC. Theta2(or q2) plus angleG, plus angleA
                 # equals pi/2, a right angle.
-                
-            sideA = sqrt((Wz-0.75)**2 + (Wx-0.35)**2 - (1.25**2))
-            angleA = atan2(sideA, 1.25)
-    
+            
+            # We can now define theta2 since we know that theta2 + angleA + angleG = 90deg; therefore:
+            
             q2 = pi/2 - angleG - angleA     
             #theta2
-            
-            
-            sideS = abs(2-Wz)
-            
-            sideB = sqrt(1.25**2 + (Wx-0.35)**2 + sideS**2)
 
-            angleS = atan2(sideS, Wx-0.35)
             
-            angleB = atan2(sideB, 1.25)
             
-            q3 = pi/2 - angleS - angleB     
+            # Now, let's determine theta3:
+            
+            # We'll use the same logic from theta2 of defining a 90degree angle, then deducing theta3 from that.
+            
+            ANGLE_S = atan2(SIDE_S, JOINTS_4AND5_X)
+            # I've defined 'ANGLE_S' as the angle above SIDE_A that makes angleB into a 90deg angle
+                # when the Kuka KR210 is in its zero configuration. This is a constant.
+                # Note, this could also have been done with 'asin(SIDE_S/SIDE_A)'
+
+            q3 = pi/2 - ANGLE_S - angleB     
             # theta3
             
+            # Use tranpose instead of inv("LU")
             
-        
+            
         # TODO: ### Calculate joint angles using Geometric IK method
         #
         #
