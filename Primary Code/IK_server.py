@@ -224,7 +224,7 @@ def handle_calculate_IK(req):
                          [Wy],
                          [Wz]])
             
-            q1 = atan2(Wy, Wx)  
+            theta1 = atan2(Wy, Wx)  
             # theta1
             
             
@@ -261,7 +261,7 @@ def handle_calculate_IK(req):
             
             # We can now define theta2 since we know that theta2 + angleA + angleG = 90deg; therefore:
             
-            q2 = pi/2 - angleG - angleA     
+            theta2 = pi/2 - angleG - angleA     
             #theta2
 
             
@@ -275,18 +275,26 @@ def handle_calculate_IK(req):
                 # when the Kuka KR210 is in its zero configuration. This is a constant.
                 # Note, this could also have been done with 'asin(SIDE_S/SIDE_A)'
 
-            q3 = pi/2 - ANGLE_S - angleB     
+            theta3 = pi/2 - ANGLE_S - angleB     
             # theta3
             
             # Use tranpose instead of inv("LU")
             
+            R0_6 = Rrpy
             
-        # TODO: ### Calculate joint angles using Geometric IK method
-        #
-        #
-         
-        # Populate response for the IK request
-            joint_trajectory_point.positions = [q1, q2, q3, q4, q5, q6]
+            R0_3 = T0_1[0:3,0:3] * T1_2[0:3,0:3] * T2_3[0:3,0:3]
+            # this cuts our homogeneous transforms down to 3x3 rotation matrices
+            R0_3 = R0_3.evalf(subs={q1:theta1, q2:theta2, q3:theta3})
+            
+            R3_6 = R0_3.T * Rrpy
+            
+            theta4 = atan2(R3_6[2,2], -R3_6[0,2])
+            theta5 = atan2(sqrt(R3_6[0,2]*R3_6[0,2] + R3_6[2,2]*R3_6[2,2]),R3_6[1,2])
+            theta6 = atan2(-R3_6[1,1],R3_6[1,0])
+            
+                
+            # Populate response for the IK request
+            joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
             joint_trajectory_list.append(joint_trajectory_point)
 
         rospy.loginfo("length of Joint Trajectory List: %s" % len(joint_trajectory_list))
