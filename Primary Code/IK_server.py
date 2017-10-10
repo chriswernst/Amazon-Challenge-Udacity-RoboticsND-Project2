@@ -1,19 +1,18 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2017 Electric Movement Inc.
+# September 2017
 #
 # This file is part of Robotic Arm: Pick and Place project for Udacity
 # Robotics nano-degree program
-#
-# All Rights Reserved.
 
-# Author: Harsh Pandya
+# Author: Chris Ernst
 
 # NOTE: This is Python2 Code!
 
 # import modules
 import rospy
 import tf
+import numpy as np
 from kuka_arm.srv import *
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from geometry_msgs.msg import Pose
@@ -41,7 +40,6 @@ def handle_calculate_IK(req):
         alpha0, alpha1, alpha2, alpha3, alpha4, alpha5, alpha6 = symbols('alpha0:7')
         # (Twist angle - angle between Zi-1 and Z- measured about Xi-1 in a right hand sense)
         
-        
         ### Create Modified DH parameters
         
         # Parameters for KUKA KR210 #
@@ -50,17 +48,18 @@ def handle_calculate_IK(req):
         # URDF Folder > kr210.urdf.xacro
         
         # Create a dictionary of DH Parameters
-        DH_TABLE = {alpha0:     0,     a0:      0,    d1: 0.75,    q1:          q1,
-                    alpha1: -pi/2,     a1:   0.35,    d2: 0,       q2:   q2 - pi/2, 
-                    alpha2:     0,     a2:   1.25,    d3: 0,       q3:          q3,
-                    alpha3: -pi/2,     a3: -0.054,    d4: 1.5,     q4:          q4,
-                    alpha4:  pi/2,     a4:      0,    d5: 0,       q5:          q5,
-                    alpha5: -pi/2,     a5:      0,    d6: 0,       q6:          q6,
-                    alpha6:     0,     a6:      0,    d7: 0.303,   q7:           0}
+        DH_TABLE = {alpha0:         0,     a0:      0,    d1: 0.75,    q1:           q1,
+                    alpha1: -np.pi/2.,     a1:   0.35,    d2: 0,       q2: q2 - np.pi/2., 
+                    alpha2:         0,     a2:   1.25,    d3: 0,       q3:           q3,
+                    alpha3: -np.pi/2.,     a3: -0.054,    d4: 1.5,     q4:           q4,
+                    alpha4:  np.pi/2.,     a4:      0,    d5: 0,       q5:           q5,
+                    alpha5: -np.pi/2.,     a5:      0,    d6: 0,       q6:           q6,
+                    alpha6:         0,     a6:      0,    d7: 0.303,   q7:            0}
+                    # The decimal after the integer indicates float
 
                 
         
-        def transformationMatrix(alpha, a, d, q):
+        def transformationMatrix(alpha,a,d,q):
             TF = Matrix([[             cos(q),            -sin(q),            0,       a],
                       [ sin(q)*cos(alpha), cos(q)*cos(alpha), -sin(alpha), -sin(alpha)*d],
                       [ sin(q)*sin(alpha), cos(q)*sin(alpha),  cos(alpha),  cos(alpha)*d],
@@ -70,72 +69,48 @@ def handle_calculate_IK(req):
         # Homogeneous Transforms for between neighboring links: 
         # Create individual transformation matrices
 
-        T0_1 = transformMatrix(alpha0, a0, d1, q1).subs(DH_TABLE) # Base Link to Link1
-        T1_2 = transformMatrix(alpha1, a1, d2, q2).subs(DH_TABLE) # Link1 to Link2
-        T2_3 = transformMatrix(alpha2, a2, d3, q3).subs(DH_TABLE) # Link2 to Link3
-        T3_4 = transformMatrix(alpha3, a3, d4, q4).subs(DH_TABLE) # Link3 Link to Link4
-        T4_5 = transformMatrix(alpha4, a4, d5, q5).subs(DH_TABLE) # Link4 to Link5       
-        T5_6 = transformMatrix(alpha5, a5, d6, q6).subs(DH_TABLE) # Link5 to Link6       
-        T6_G = transformMatrix(alpha6, a6, d7, q7).subs(DH_TABLE) # Link6 to Gripper             
+        T0_1 = transformationMatrix(alpha0, a0, d1, q1).subs(DH_TABLE) # Base Link to Link1
+        T1_2 = transformationMatrix(alpha1, a1, d2, q2).subs(DH_TABLE) # Link1 to Link2
+        T2_3 = transformationMatrix(alpha2, a2, d3, q3).subs(DH_TABLE) # Link2 to Link3
+        T3_4 = transformationMatrix(alpha3, a3, d4, q4).subs(DH_TABLE) # Link3 Link to Link4
+        T4_5 = transformationMatrix(alpha4, a4, d5, q5).subs(DH_TABLE) # Link4 to Link5       
+        T5_6 = transformationMatrix(alpha5, a5, d6, q6).subs(DH_TABLE) # Link5 to Link6       
+        T6_G = transformationMatrix(alpha6, a6, d7, q7).subs(DH_TABLE) # Link6 to Gripper             
         
         # Composition of Homogeneous Transforms 
-
         T0_G = T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_G
         # this is the transformation matrix from the base link to the end effector
         
-              
-        def rot_x(q):
-            
-            R_x = Matrix([[ 1,             0,         0,    0],
-                          [ 0,        cos(q),   -sin(q),    0],
-                          [ 0,        sin(q),    cos(q),    0],
-                          [ 0,             0,         0,    1]])
-                    
-            return R_x
+        r, p, y = symbols('r p y')
+
+        rot_x = Matrix([[ 1,             0,         0],
+                        [ 0,        cos(r),   -sin(r)],
+                        [ 0,        sin(r),    cos(r)]])
             # Rotation about X axis (Roll)
-        
             
-        def rot_y(q):              
-            
-            R_y = Matrix([[  cos(q),        0,   sin(q),    0],
-                          [       0,        1,        0,    0],
-                          [ -sin(q),        0,   cos(q),    0],
-                          [       0,        0,        0,    1]])
-        
-            return R_y
+        rot_y = Matrix([[  cos(p),        0,   sin(p)],
+                        [       0,        1,        0],
+                        [ -sin(p),        0,   cos(p)]])
             # Rotation about Y axis (Pitch)
         
-        
-        def rot_z(q):    
-        
-            R_z = Matrix([[ cos(q),   -sin(q),        0,    0],
-                          [ sin(q),    cos(q),        0,    0],
-                          [ 0,              0,        1,    0],
-                          [ 0,              0,        0,    1]])
-            
-            return R_z
+        rot_z = Matrix([[ cos(y),   -sin(y),        0],
+                        [ sin(y),    cos(y),        0],
+                        [ 0,              0,        1]])
             # Rotation about Z axis (Yaw)
             
-        
-        
+        ROT_G = rot_z * rot_y * rot_x 
 	    ### Compensate for rotation discrepancy between DH parameters and Gazebo
         
-        R_z = rot_z(pi)
+        R_corr = rot_z.subs(y, radians(180)) * rot_y.subs(p, radians(-90))
         # Rotate about the Z axis by 180deg
-        R_y = rot_y(-pi/2)
         # Rotate about the Y axis by -90deg   
-        R_corr = R_z * R_y
         
-        T_total = T0_G * R_corr
-        # This line also takes time to calculate (~15s)
+        ROT_G = ROT_G * R_corr
         
         # Evaluate numerically at '0' to verify FK section with Rviz (NB pg. 84 - 'Debugging FK')
         
         # gripper_testing = print(T_total.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
             # correct at d1=.75, d2=0
-	           
-        
-  
             
         ##### Your IK code here 
 
@@ -158,38 +133,36 @@ def handle_calculate_IK(req):
     
         	   # Compensate for rotation discrepancy between DH parameters and Gazebo
 
-            Rrpy = rot_z(yaw) * rot_y(pitch) * rot_x(roll) * R_corr
+            ROT_G = ROT_G.subs({'r':roll, 'p':pitch,'y':yaw})
+
+            EE = Matrix([[px],
+                         [py],
+                         [pz]])
+            # Put the end effector positions into a Matrix
+            
             # Now need to extract Nx, Ny, Nz from Rrpy matrix to give us the WC position
-            
-            Nx = Rrpy[0,2]
-            Ny = Rrpy[1,2]
-            Nz = Rrpy[2,2]
-            
-            Wx = px - .303 * Nx
-            Wy = py - .303 * Ny
-            Wz = pz - .303 * Nz
-            
-            WC = Matrix([[Wx],
-                         [Wy],
-                         [Wz]])
+           
+            WC = EE - 0.303 * ROT_G[:,2]
+
+            Wx = WC[0]
+            Wy = WC[1]
+            Wz = WC[2]
             
             theta1 = atan2(Wy, Wx)  
             # theta1
-            
-            
             
             # Now, let's determine theta2:
             
             SIDE_S = 0.054
             # Taken from the Z measurement from the URDF (joints 4 and 5), lines 344, 355. This is a constant.
             
-            JOINTS_4AND5_X = 0.96 + 0.54
+            JOINTS_4AND5_X = 1.5 # (0.96 + 0.54)
             # This is taken from line 344, 351(joints 4 and 5) of the URDF file 'kr210.urdf.xacro'. This is a constant.
             
             # SIDES
             SIDE_A = sqrt(SIDE_S**2 + JOINTS_4AND5_X**2)
             # SIDE_A is a constant length
-            sideB = sqrt((Wz-0.75)**2 + (Wx-0.35)**2 + Wy**2)
+            sideB = sqrt((Wz-0.75)**2 + (sqrt(Wx**2 + Wy**2) -0.35)**2)          
             # sideB is a variable length
             SIDE_C = 1.25
             # SIDE_C is a constant length
@@ -209,10 +182,8 @@ def handle_calculate_IK(req):
                 # equals pi/2, a right angle.
             
             # We can now define theta2 since we know that theta2 + angleA + angleG = 90deg; therefore:
-            
-            theta2 = pi/2 - angleG - angleA     
+            theta2 = np.pi/2. - angleG - angleA     
             #theta2
-
 
             # Now, let's determine theta3:
             
@@ -223,25 +194,21 @@ def handle_calculate_IK(req):
                 # when the Kuka KR210 is in its zero configuration. This is a constant.
                 # Note, this could also have been done with 'asin(SIDE_S/SIDE_A)'
 
-            theta3 = pi/2 - ANGLE_S - angleB     
+            theta3 = np.pi/2. - ANGLE_S - angleB     
             # theta3
             
             # Use tranpose instead of inv("LU")
-            
-            R0_6 = Rrpy
+            # Note: R0_6 = Rrpy
             
             R0_3 = T0_1[0:3,0:3] * T1_2[0:3,0:3] * T2_3[0:3,0:3]
             # this cuts our homogeneous transforms down to 3x3 rotation matrices
             R0_3 = R0_3.evalf(subs={q1:theta1, q2:theta2, q3:theta3})
-            
-            R3_6 = R0_3.T * Rrpy
+            R3_6 = R0_3.T * ROT_G
             
             theta4 = atan2(R3_6[2,2], -R3_6[0,2])
             theta5 = atan2(sqrt(R3_6[0,2]*R3_6[0,2] + R3_6[2,2]*R3_6[2,2]),R3_6[1,2])
             theta6 = atan2(-R3_6[1,1],R3_6[1,0])
             
-            FK = T_total.evalf(subs{q1: theta1, q2: theta2, q3: theta3, q4: theta4, q5: theta5, q6:theta6})
-                
             # Populate response for the IK request
             joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
             joint_trajectory_list.append(joint_trajectory_point)
