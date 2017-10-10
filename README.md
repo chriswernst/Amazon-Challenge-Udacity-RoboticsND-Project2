@@ -138,27 +138,79 @@ Now, navigate to the **RViz** window and click `continue` to begin the motion of
 ### Code Analysis
 
 `IK_server.py` houses our code that will calculate the joint variables for the Kuka KR210.  The KR210 has 6 *Revolute Type* joints. Counting up from the base link, we have: `theta1` `theta2` `theta3` `theta4` `theta5` `theta6`
+
 <p align="center">
-    ![alt text](https://github.com/chriswernst/Amazon-Challenge-Udacity-RoboticsND-Project2/blob/master/Forward%20and%20Inverse%20Kinematics/Diagrams/l20-inverse-kinematics-02.png?raw=true)
+    <img src="https://github.com/chriswernst/Amazon-Challenge-Udacity-RoboticsND-Project2/blob/master/Forward%20and%20Inverse%20Kinematics/Diagrams/l20-inverse-kinematics-02.png?raw=true">
 </p>
+
 The first 3 joints `theta1` `theta2` `theta3` have the largest impact on the location of the end effector, or gripper; while the last 3 joints `theta4` `theta5` `theta6` make up the *spherical wrist*, with `theta5` being the Wrist Center or `WC`.
 
-
-For reference, a real Kuka KR210 looks like this:
 <p align="center">
+	For reference, a real Kuka KR210 looks like this:<br>
     <img src="https://media.robots.com/images/1363894998_1.jpg">
+    <br><br>
+    A quick refresher on joint types:
 </p>
 
-A quick refresher on joint types:
+###
 
 ![alt text](https://github.com/chriswernst/Amazon-Challenge-Udacity-RoboticsND-Project2/blob/master/Joint%20Types/joint-types-and-degrees-of-freedom-01.png?raw=true)
+Now that you have some background, it's time to dig in.
 
-We will primarily be solving the problem of Inverse Kinematics -- which is taking a point in the Cartesian Space (the location of the end effector), and determining which combinations of `theta1-6` are required to reach that point. This is no easy task, and often has more than one solution, or even no solutions!
+In this project, we're trying to solve two interesting problems:
+    **1. Forward Kinematics** 
+    **2. Inverse Kinematics**
+The more challenging of the two is **Inverse Kinematics or (IK)**. With IK, we are given the position of the target object in *Cartesian Form (x,y,z)* and we have to determine which configuration we should choose for `theta1-6` (the robot's joints). This is no easy task, and often has more than one solution, or even no solutions!
+
+**Forward Kinematics or (FK)** is what we use to determine where our end effector currently is.
+
+<p align="center">
+    <br> FK is the composition of Homogeneous Transforms (simultaneous Rotation and Translation)
+    <img src="https://d17h27t6h515a5.cloudfront.net/topher/2017/June/5940a1d0_eq/eq.png">
+    <br> The total Transform between Links:
+    <img src="https://d17h27t6h515a5.cloudfront.net/topher/2017/June/593eebcd_eq1/eq1.png">
+    <br> Each link is composed of two rotations and two translations, performed in this order:
+    <img src="https://d17h27t6h515a5.cloudfront.net/topher/2017/June/593eecf9_eq2/eq2.png">
+</p>
 
 ![alt text](https://github.com/chriswernst/Amazon-Challenge-Udacity-RoboticsND-Project2/blob/master/Forward%20and%20Inverse%20Kinematics/Diagrams/forward-kinematics-01.png?raw=true)
 
+###
+
+To complete our Forward and Inverse Kinematics problems, we'll harness the power of a Computer Algebra System(CAS) for Python, called **Sympy**.
+
+###
+
+![alt text](https://d17h27t6h515a5.cloudfront.net/topher/2017/June/5937535e_sympy-logo.svg/sympy-logo.svg.png)
+*I would encourage the interested reader to check out their helpful documentation [**here.**](http://docs.sympy.org/latest/index.html)*
+
+**Sympy** allows us to use symbols and build equations without evaluating them. For instance 
+```
+q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')
+```
 
 
+### Debugging
+If you're running on a Virtual Machine, you might find that your KR210's motions are correct, but the gripper is not completely grasping the cylindrical targets. This can be solved by putting a delay between the steps. Open a terminal and type:
+```sh
+$ cd ~/catkin_ws/src/RoboND-Kinematics-Project/kuka_arm/src/
+$ nano trajectory_sampler.cpp
+```
+edit line 327 of `trajectory_sampler.cpp` to say:
+```cpp
+ros::Duration(1.5).sleep();
+```
+You may want to try anywhere from `1.o` second delay all the way to `5` depending on how slow the VM is running.
 
 *README in PROGRESS*
+
+
+
+
+
+
+
+
+
+
 
