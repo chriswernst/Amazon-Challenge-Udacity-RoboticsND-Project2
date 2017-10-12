@@ -18,12 +18,17 @@
 ##### Specifically, the objectives of this project are to:
 
 **1.** Identify the location of a single object on a 9-position shelf(3x3 configuration)
+###
 **2.** Maneuver the Kuka KR210 - a 6 degree of freedom Serial Manipulator - toward the object
+###
 **3.** Grasp the object
+###
 **4.** Chart a path to the destination bin
+###
 **5.** Maneuver the Kuka KR210 along the charted path
+###
 **6.** Sucessfully place the object in the destination bin
-
+###
 ###
 
 If you'd like to watch the Kuka KR210 in action, click [**here.**](https://youtu.be/rV0lWmJ7uOM)
@@ -39,6 +44,10 @@ The code driving this project and interacting with ROS can be found at `IK_serve
 *Quick note on naming convention:* `THIS_IS_A_CONSTANT` *and* `thisIsAVariable`
 
 This **README** is broken into the following sections: **Environment Setup, Code Analysis, and Debugging**
+
+###
+###
+###
 
 ### Environment Setup
 
@@ -134,6 +143,10 @@ $ rosrun kuka_arm IK_server.py
 
 Now, navigate to the **RViz** window and click `continue` to begin the motion of the KR210 arm.
 
+###
+###
+###
+
 ### Code Analysis
 
 `IK_server.py` houses our code that will calculate the joint variables for the Kuka KR210.  The KR210 has 6 *Revolute Type* joints. Counting up from the base link, we have: `theta1` `theta2` `theta3` `theta4` `theta5` `theta6`
@@ -156,6 +169,8 @@ The first 3 joints `theta1` `theta2` `theta3` have the largest impact on the loc
 ![alt text](https://github.com/chriswernst/Amazon-Challenge-Udacity-RoboticsND-Project2/blob/master/Joint%20Types/joint-types-and-degrees-of-freedom-01.png?raw=true)
 Now that you have some background, it's time to dig in.
 
+###
+###
 
 ##### Denavit-Hartenberg (DH) Parameters
 **DH** Parameters are worth mentioning here, as they are a very useful method for describing the configuration of reference frames. They use **4** parameters instead of the typical **6** parameters to describe position and orientation.
@@ -190,7 +205,8 @@ As you can see, some reference frames are not placed at the same origins. We nee
 
 ![alt text](https://github.com/chriswernst/Amazon-Challenge-Udacity-RoboticsND-Project2/blob/master/Forward%20and%20Inverse%20Kinematics/Diagrams/Kuka_KR210_Orientation.png?raw=true)
 
-
+###
+###
 ###
 
 ##### URDF Analysis
@@ -282,7 +298,7 @@ We then take the `0.193` and `0.11` and add them together to get `d7=0.303`
 
 ***And our DH Parameter Table:***
 ###
-![alt text](https://github.com/chriswernst/Amazon-Challenge-Udacity-RoboticsND-Project2/blob/master/Forward%20and%20Inverse%20Kinematics/Denavit-Hartenberg%20Parameters/DH_parameter_table.jpg?raw=true)
+![alt text](https://github.com/chriswernst/Amazon-Challenge-Udacity-RoboticsND-Project2/blob/master/Forward%20and%20Inverse%20Kinematics/Denavit-Hartenberg%20Parameters/DH_parameter_table.JPG?raw=true)
 
 ###
 
@@ -293,6 +309,7 @@ We then take the `0.193` and `0.11` and add them together to get `d7=0.303`
 In this project, we're trying to solve two interesting problems:
 
 **1.** Forward Kinematics
+###
 **2.** Inverse Kinematics
 
 ###
@@ -503,15 +520,6 @@ edit `line 327` of `trajectory_sampler.cpp` to say:
 ros::Duration(2).sleep();
 ```
 You may want to try anywhere from `1.o` second delay all the way to `5` depending on how slow the VM is running.
-
-*README in PROGRESS*
-
-
-
-
-
-
-
 
 
 
