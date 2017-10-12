@@ -4,9 +4,7 @@
 #
 # This file is part of Robotic Arm: Pick and Place project for Udacity
 # Robotics nano-degree program
-
-# Author: Chris Ernst
-
+#
 # NOTE: This is Python2 Code!
 
 # import modules
@@ -26,11 +24,10 @@ def handle_calculate_IK(req):
         print "No valid poses received"
         return -1
     else:
-                        		
+                                
         ##### FK code here
 
         ### Create symbols
-        
         q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')
         # The Thetas (joint angle - angle between Xi-1 to Xi), and one for the gripper
         d1, d2, d3, d4, d5, d6, d7 = symbols('d1:8')
@@ -68,7 +65,6 @@ def handle_calculate_IK(req):
         
         # Homogeneous Transforms for between neighboring links: 
         # Create individual transformation matrices
-
         T0_1 = transformationMatrix(alpha0, a0, d1, q1).subs(DH_TABLE) # Base Link to Link1
         T1_2 = transformationMatrix(alpha1, a1, d2, q2).subs(DH_TABLE) # Link1 to Link2
         T2_3 = transformationMatrix(alpha2, a2, d3, q3).subs(DH_TABLE) # Link2 to Link3
@@ -99,29 +95,25 @@ def handle_calculate_IK(req):
             # Rotation about Z axis (Yaw)
             
         ROT_G = rot_z * rot_y * rot_x 
-	    ### Compensate for rotation discrepancy between DH parameters and Gazebo
         
         R_corr = rot_z.subs(y, radians(180)) * rot_y.subs(p, radians(-90))
+        # Compensate for rotation discrepancy between DH parameters and Gazebo
         # Rotate about the Z axis by 180deg
         # Rotate about the Y axis by -90deg   
         
         ROT_G = ROT_G * R_corr
-        
-        # Evaluate numerically at '0' to verify FK section with Rviz (NB pg. 84 - 'Debugging FK')
-        
-        # gripper_testing = print(T_total.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
-            # correct at d1=.75, d2=0
             
+
         ##### Your IK code here 
 
-	    # Extract end-effector position and orientation from request
+        # Extract end-effector position and orientation from request
         # Initialize service response
         joint_trajectory_list = []
         for x in xrange(0, len(req.poses)):
             # IK code starts here
             joint_trajectory_point = JointTrajectoryPoint()
         
-        	    # px,py,pz = end-effector position
+                # px,py,pz = end-effector position
              # roll, pitch, yaw = end-effector orientation
             px = req.poses[x].position.x
             py = req.poses[x].position.y
@@ -131,8 +123,6 @@ def handle_calculate_IK(req):
                 [req.poses[x].orientation.x, req.poses[x].orientation.y,
                     req.poses[x].orientation.z, req.poses[x].orientation.w])
     
-        	   # Compensate for rotation discrepancy between DH parameters and Gazebo
-
             ROT_G = ROT_G.subs({'r':roll, 'p':pitch,'y':yaw})
 
             EE = Matrix([[px],
@@ -140,8 +130,7 @@ def handle_calculate_IK(req):
                          [pz]])
             # Put the end effector positions into a Matrix
             
-            # Now need to extract Nx, Ny, Nz from Rrpy matrix to give us the WC position
-           
+            # Now we need to extract the WC position
             WC = EE - 0.303 * ROT_G[:,2]
 
             Wx = WC[0]
@@ -152,7 +141,6 @@ def handle_calculate_IK(req):
             # theta1
             
             # Now, let's determine theta2:
-            
             SIDE_S = 0.054
             # Taken from the Z measurement from the URDF (joints 4 and 5), lines 344, 355. This is a constant.
             
@@ -199,7 +187,6 @@ def handle_calculate_IK(req):
             
             # Use tranpose instead of inv("LU")
             # Note: R0_6 = Rrpy
-            
             R0_3 = T0_1[0:3,0:3] * T1_2[0:3,0:3] * T2_3[0:3,0:3]
             # this cuts our homogeneous transforms down to 3x3 rotation matrices
             R0_3 = R0_3.evalf(subs={q1:theta1, q2:theta2, q3:theta3})
@@ -208,6 +195,7 @@ def handle_calculate_IK(req):
             theta4 = atan2(R3_6[2,2], -R3_6[0,2])
             theta5 = atan2(sqrt(R3_6[0,2]*R3_6[0,2] + R3_6[2,2]*R3_6[2,2]),R3_6[1,2])
             theta6 = atan2(-R3_6[1,1],R3_6[1,0])
+            # Theta4,5,6
             
             # Populate response for the IK request
             joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
@@ -226,4 +214,3 @@ def IK_server():
 
 if __name__ == "__main__":
     IK_server()
-    
