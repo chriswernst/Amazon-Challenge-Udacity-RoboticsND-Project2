@@ -12,8 +12,8 @@
 ###### The goal of this project is to program a Serial Manipulator to pick up objects and place them in a bin. The project is based on Amazon's Pick and Place Challenge.
 ###
 ###
-
-![alt text](https://github.com/chriswernst/Amazon-Challenge-Udacity-RoboticsND-Project2/blob/master/Kuka%20KR210/req-challenge.gif?raw=true)
+***Click the GIF below to see a video of the project result!***
+[![alt text](https://github.com/chriswernst/Amazon-Challenge-Udacity-RoboticsND-Project2/blob/master/Kuka%20KR210/req-challenge.gif?raw=true)](https://youtu.be/46RcDaRluGc)
 
 ##### Specifically, the objectives of this project are to:
 
@@ -521,6 +521,10 @@ ros::Duration(2).sleep();
 ```
 You may want to try anywhere from `1.o` second delay all the way to `5` depending on how slow the VM is running.
 
+###
+###
+#### Conclusion
+This was a very math heavy project, but clearly very applicable and useful in the world of robotics. In terms of improving the project, I think it would be best to run the project natively on Linux to limit the amount of lag. In the future, I would like to implement this project on a physical representation of the KR210.
 
 
 
